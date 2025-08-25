@@ -990,7 +990,12 @@ rs_jsonapi {
                 \"-DCMAKE_CXX_FLAGS=$${QMAKE_CXXFLAGS}\" \
                 $${CMAKE_GENERATOR_OVERRIDE} -DBUILD_SSL=OFF \
                 -DCMAKE_INSTALL_PREFIX=. $${RESTBED_CMAKE_PARAMS} -B. \
-                -H$$shell_path($${RESTBED_SRC_PATH}) && \
+                -H$$shell_path($${RESTBED_SRC_PATH}) &&
+        win32-g++:!isEmpty(QMAKE_SH) {
+            genrestbedlib.commands += \
+                find $$shell_path($${RESTBED_BUILD_PATH}) -type f -name "flags.make" -exec $(SED) -i -e \"s/-isystem [^ ]*\\/msys64\\/\\(mingw64\\|ucrt64\\)\\/include\\( \\|\$\$\\)//\" {} + &&
+        }
+        genrestbedlib.commands += \
             $(MAKE)
         QMAKE_EXTRA_COMPILERS += genrestbedlib
 
@@ -1248,7 +1253,13 @@ message("In rnp_rnplib precompilation code")
     librnp.CONFIG += target_predeps combine
     librnp.variable_out = PRE_TARGETDEPS
     librnp.depends = $${librnp_header.output}
-    librnp.commands += cd $$shell_path($${LIBRNP_BUILD_PATH}) && $(MAKE) rnp
+    librnp.commands += cd $$shell_path($${LIBRNP_BUILD_PATH}) &&
+    win32-g++:!isEmpty(QMAKE_SH) {
+        librnp.commands += \
+            find $$shell_path($${LIBRNP_BUILD_PATH}) -type f -name "flags.make" -exec $(SED) -i -e \"s/-isystem [^ ]*\\/msys64\\/\\(mingw64\\|ucrt64\\)\\/include\\( \\|\$\$\\)//\" {} + &&
+    }
+    librnp.commands += \
+        $(MAKE) rnp
 
     QMAKE_EXTRA_COMPILERS += librnp
 
