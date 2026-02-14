@@ -1919,6 +1919,18 @@ bool p3Wire::subscribeToGroup(uint32_t& token, const RsGxsGroupId& groupId, bool
     return response;
 }
 
+bool p3Wire::subscribe(const RsGxsGroupId& groupId, bool subscribe)
+{
+#ifdef WIRE_DEBUG
+    std::cerr << "p3Wire::subscribe() id: " << groupId << " subscribe: " << subscribe;
+    std::cerr << std::endl;
+#endif
+
+    // Token is managed internally - UI doesn't need to handle it
+    uint32_t token;
+    return subscribeToGroup(token, groupId, subscribe);
+}
+
 void p3Wire::refreshSubscribedGroups()
 {
     uint32_t token;
