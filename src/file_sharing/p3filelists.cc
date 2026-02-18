@@ -676,12 +676,12 @@ bool p3FileDatabase::loadList(std::list<RsItem *>& load)
             // Migration V1 (deprecated Feb 2026) -> V2: Set timestamp to now
             rstime_t now = time(NULL);
             RsDbg() << "UPLOADSTATS Migrating V1 stats (count: " << fu->hash_stats.size() << ") to V2";
-            for(auto const& [hash, bytes] : fu->hash_stats)
+            for(auto const& it : fu->hash_stats)
             {
-                TimeBasedUploadStat& stat = mCumulativeUploaded[hash];
-                stat.total_bytes = bytes;
+                TimeBasedUploadStat& stat = mCumulativeUploaded[it.first];
+                stat.total_bytes = it.second;
                 stat.last_upload_ts = now;
-                mCumulativeUploadedAll += bytes;
+                mCumulativeUploadedAll += it.second;
             }
         }
 
