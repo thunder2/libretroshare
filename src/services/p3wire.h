@@ -94,6 +94,10 @@ public:
     void setMessageReadStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, bool read) override;
 
     bool subscribeToGroup(uint32_t& token, const RsGxsGroupId& groupId, bool subscribe) override;
+
+    // Simple subscribe/unsubscribe API without token management (for UI use)
+    bool subscribe(const RsGxsGroupId& groupId, bool subscribe) override;
+
     uint32_t getFollowingCount() override;
     bool getSubscribedGroups(std::list<RsGxsGroupId>& groupIds) override;
 
