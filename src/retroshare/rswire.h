@@ -274,6 +274,11 @@ virtual bool getPulseFocus(const RsGxsGroupId &groupId, const RsGxsMessageId &ms
                                       std::vector<RsMsgMetaData>& summaries ) = 0;
 
     virtual bool subscribeToGroup(uint32_t& token, const RsGxsGroupId& groupId, bool subscribe) = 0;
+
+    // Simple subscribe/unsubscribe API without token management (for UI use)
+    // Tokens are handled internally by libretroshare
+    virtual bool subscribe(const RsGxsGroupId& groupId, bool subscribe) = 0;
+
     virtual uint32_t getFollowingCount() = 0;
     virtual bool getSubscribedGroups(std::list<RsGxsGroupId>& groupIds) = 0;
 
