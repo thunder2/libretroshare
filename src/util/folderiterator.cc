@@ -137,7 +137,10 @@ bool FolderIterator::updateFileInfo(bool& should_skip)
 	  return true ;
    }
 
-   mFullPath = mFolderName + "/" + mFileName ;
+   if(!mFolderName.empty() && (mFolderName.back() == '/' || mFolderName.back() == '\\'))
+       mFullPath = mFolderName + mFileName ;
+   else
+       mFullPath = mFolderName + "/" + mFileName ;
 
 #warning cyril soler: should we take care of symbolic links on windows?
 #ifndef WINDOWS_SYS
