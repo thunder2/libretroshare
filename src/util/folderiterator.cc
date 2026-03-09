@@ -34,6 +34,8 @@
 #include "util/rswin.h"
 #endif
 
+#include "util/rsdir.h"
+
 
 //#define DEBUG_FOLDER_ITERATOR 1
 
@@ -137,10 +139,7 @@ bool FolderIterator::updateFileInfo(bool& should_skip)
 	  return true ;
    }
 
-   if(!mFolderName.empty() && (mFolderName.back() == '/' || mFolderName.back() == '\\'))
-       mFullPath = mFolderName + mFileName ;
-   else
-       mFullPath = mFolderName + "/" + mFileName ;
+   mFullPath = RsDirUtil::makePath(mFolderName, mFileName);
 
 #warning cyril soler: should we take care of symbolic links on windows?
 #ifndef WINDOWS_SYS
