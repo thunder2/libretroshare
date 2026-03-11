@@ -527,6 +527,10 @@ bool RsDirUtil::checkDirectory(const std::string& dir)
 	// mingw64 _wstat fails when the directory name has trailing slash or backslash: we remove them
 	while (!fixed.empty() && (fixed.back() == '\\' || fixed.back() == '/'))
 		fixed.pop_back();
+	// Restore separator for Windows drive roots: "C:" alone means the
+	// current working directory on drive C, not the root of the drive.
+	if (fixed.size() == 2 && fixed[1] == ':' && isalpha(fixed[0]))
+		fixed += '\\';
 	librs::util::ConvertUtf8ToUtf16(fixed, wdir);
 	struct _stat buf;
 	val = _wstat(wdir.c_str(), &buf);

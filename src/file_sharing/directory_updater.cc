@@ -303,7 +303,7 @@ void LocalDirectoryUpdater::recursUpdateSharedDir(
 					if(dir_is_accepted && mFollowSymLinks && mIgnoreDuplicates)
 					{
 						std::string real_path = RsDirUtil::removeSymLinks(
-						            cumulated_path + "/" + dirIt.file_name() );
+						            RsDirUtil::makePath(cumulated_path, dirIt.file_name()) );
 
 						if( existing_directories.end() !=
 						        existing_directories.find(real_path) )
@@ -355,7 +355,7 @@ void LocalDirectoryUpdater::recursUpdateSharedDir(
 			 * The later is always needed. */
 
 			if( mHashCache->requestHash(
-			            cumulated_path + "/" + dit.name(),
+			            RsDirUtil::makePath(cumulated_path, dit.name()),
 			            dit.size(), dit.modtime(), hash, this, *dit ) )
 				mSharedDirectories->updateHash(*dit, hash, hash != dit.hash());
 		}
@@ -364,7 +364,7 @@ void LocalDirectoryUpdater::recursUpdateSharedDir(
 	// go through the list of sub-dirs and recursively update
 	for( DirectoryStorage::DirIterator stored_dir_it(mSharedDirectories, indx);
 	     stored_dir_it; ++stored_dir_it )
-		recursUpdateSharedDir( cumulated_path + "/" + stored_dir_it.name(),
+		recursUpdateSharedDir( RsDirUtil::makePath(cumulated_path, stored_dir_it.name()),
 		                       *stored_dir_it, existing_directories,
 		                       current_depth+1, some_files_not_ready );
 }
