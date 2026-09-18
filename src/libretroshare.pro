@@ -936,6 +936,14 @@ rs_gxs_trans {
 }
 
 rs_jsonapi {
+    win32 {
+        contains(QMAKE_HOST.arch, x86_64) {
+            # Prevent jsonapi.o: too many sections
+            QMAKE_CXXFLAGS *= -Wa,-mbig-obj
+            QMAKE_CFLAGS   *= -Wa,-mbig-obj
+        }
+    }
+
     JSONAPI_GENERATOR_SRC=$$clean_path($${RS_SRC_PATH}/jsonapi-generator/src/)
     JSONAPI_GENERATOR_OUT=$$clean_path($${RS_BUILD_PATH}/jsonapi-generator/src/)
     isEmpty(JSONAPI_GENERATOR_EXE) {
