@@ -303,7 +303,14 @@ if(RS_LIBRETROSHARE_SHARED)
 	endif()
 endif(RS_LIBRETROSHARE_SHARED)
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+# MinGW-w64 prior to GCC 9.0 (such as GCC 8.1.0, used by Qt 5.12) suffers from broken
+# C++17 <filesystem> support on Windows (MinGW-w64 bug #737, missing wchar_t/UTF-16 path
+# handling in libstdc++). Fall back to C++14 on older MinGW versions.
+if(MINGW AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.0")
+	set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
+else()
+	set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+endif()
 
 if(WIN32)
 	target_compile_definitions(
@@ -441,7 +448,14 @@ if(RS_RNPLIB)
 	if(NOT RS_PREBUILT_RNP_LIBRARY AND EXISTS "${RNPLIB_DEVEL_DIR}/CMakeLists.txt")
 		message(STATUS "librnp source found at ${RNPLIB_DEVEL_DIR} using it")
 		rnplib_set_inline_build_options()
+		set(OLD_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+		if(MINGW AND NOT MSYS AND "$ENV{MSYSTEM}" STREQUAL "")
+			# Windows native build
+			# Causes compilation error
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MINGW_USE_VC2005_COMPAT -D__STDC_FORMAT_MACROS -fno-omit-frame-pointer")
+		endif()
 		add_subdirectory("${RNPLIB_DEVEL_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/librnp")
+		set(CMAKE_CXX_FLAGS "${OLD_CXX_FLAGS}")
 		rnplib_restore_build_options()
 		set(RNPLIB_SRC_DIR "${RNPLIB_DEVEL_DIR}")
 		set(RNPLIB_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}/librnp")
@@ -693,23 +707,31 @@ if(RS_JSON_API)
 			${PROJECT_NAME} PUBLIC "${RESTBED_DEVEL_DIR}/source/" )
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${RESTBED_TARGET})
 	else()
-		message( WARNING
-		         "FetchContent restbed, will be installed if you run make install")
-		rs_fetch_fallback_guard(restbed)
-		FetchContent_Declare(
-			restbed
-			GIT_REPOSITORY "https://github.com/Corvusoft/restbed.git"
-			GIT_TAG "4.8"
-			GIT_SUBMODULES dependency/asio dependency/catch
-			GIT_SHALLOW TRUE
-			GIT_PROGRESS TRUE
-			TIMEOUT 10
-			# PATCH_COMMAND applies hotfixes to restbed before building:
-			# 1. Removes /wd4251 (MSVC-specific flag) that breaks GCC/Clang builds.
-			# 2. Bumps CMake minimum version to 3.5.0 to suppress deprecation warnings in CMake >= 3.27.
-			PATCH_COMMAND sed -i -e "s|/wd4251||g" -e "s|VERSION 3.1.0|VERSION 3.5.0|g" CMakeLists.txt
-		)
-		FetchContent_MakeAvailable(restbed)
+		if(MINGW AND NOT MSYS AND "$ENV{MSYSTEM}" STREQUAL "")
+			# Windows native build
+			add_subdirectory(
+				${RESTBED_DEVEL_DIR}
+				${CMAKE_BINARY_DIR}/restbed
+				EXCLUDE_FROM_ALL )
+		else()
+			message( WARNING
+			        "FetchContent restbed, will be installed if you run make install")
+			rs_fetch_fallback_guard(restbed)
+			FetchContent_Declare(
+				restbed
+				GIT_REPOSITORY "https://github.com/Corvusoft/restbed.git"
+				GIT_TAG "4.8"
+				GIT_SUBMODULES dependency/asio dependency/catch
+				GIT_SHALLOW TRUE
+				GIT_PROGRESS TRUE
+				TIMEOUT 10
+				# PATCH_COMMAND applies hotfixes to restbed before building:
+				# 1. Removes /wd4251 (MSVC-specific flag) that breaks GCC/Clang builds.
+				# 2. Bumps CMake minimum version to 3.5.0 to suppress deprecation warnings in CMake >= 3.27.
+				PATCH_COMMAND sed -i -e "s|/wd4251||g" -e "s|VERSION 3.1.0|VERSION 3.5.0|g" CMakeLists.txt
+			)
+			FetchContent_MakeAvailable(restbed)
+		endif()
 
 		set(RESTBED_TARGET restbed-static)
 		if(TARGET restbed-shared AND BUILD_SHARED_LIBS)
@@ -1071,3 +1093,13 @@ endif(RS_CPPTRACE_STACKTRACE)
 if(RS_USE_I2P_SAM3)
 	target_link_libraries(${PROJECT_NAME} PRIVATE sam3)
 endif()
+
+if(RS_LIBRETROSHARE_SHARED)
+	if(WIN32)
+		get_target_property(CURRENT_LIBS ${PROJECT_NAME} LINK_LIBRARIES)
+
+		set_target_properties(${PROJECT_NAME} PROPERTIES
+			LINK_LIBRARIES "-Wl,--start-group;${CURRENT_LIBS};-Wl,--end-group"
+		)
+	endif()
+endif(RS_LIBRETROSHARE_SHARED)
